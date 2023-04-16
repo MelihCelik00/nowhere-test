@@ -1,29 +1,46 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections.Generic;
+using Random = UnityEngine.Random;
 
 namespace Assets.Scripts
 {
     [RequireComponent(typeof(SpriteRenderer))]
     public class Ball : MonoBehaviour
     {
-        public Color Color { get => _spriteRenderer.color; }
-        protected SpriteRenderer _spriteRenderer;
+        public enum Colors
+        {
+            Red,
+            Blue
+        }
 
+        public Colors Color
+        {
+            get => _color;
+            set
+            {
+                _color = value;
+                _spriteRenderer.color = ColorMap[_color];
+            }
+        }
+        
+        private Colors _color;
+        protected SpriteRenderer _spriteRenderer;
+        
         //TODO: Implement 2 types of balls which has red and blue colors.
         //OPTIONAL: Think outside the box.
-
-        public List<Color> colorList;
+        
+        // For further cases, art directors/artists/etc. can change the color easily from ScriptableObjects
+        // SO is not implemented for now, but can be implemented easily
+        public static Dictionary<Colors,UnityEngine.Color> ColorMap = new Dictionary<Colors, UnityEngine.Color>()
+        {
+            {Colors.Red, UnityEngine.Color.red},
+            {Colors.Blue, UnityEngine.Color.blue}
+        };
 
         protected virtual void Awake()
         {
             _spriteRenderer = GetComponent<SpriteRenderer>();
-        }
-
-        void Start()
-        {
-            colorList = new List<Color>(){ Color.red, Color.blue};
-            Color randomColor = colorList[Random.Range(0, colorList.Count)];
-            _spriteRenderer.color = randomColor;
         }
 
         public void SetName(string name)

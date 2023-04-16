@@ -1,41 +1,40 @@
+using Assets.Scripts.Helpers;
 using UnityEngine;
 
 namespace Assets.Scripts.Managers
 {
-    public class GameManager : MonoBehaviour
+    public class GameManager : SingletonBehaviour<GameManager>
     {
-        public static GameManager Instance { get; private set; }
 
         [SerializeField] public AudioClip _spawnSound;
         [SerializeField] public AudioClip _removeSound;
 
 		private AudioSource _audioSource;
-        
 
-        private void Awake()
+
+		protected override void Awake()
         {
+	        base.Awake();
             //TODO: What's a better way to implement this singleton?
-            // var gameManagers = FindObjectsOfType<GameManager>();
-            
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else if (Instance != this)
-            {
-                Destroy(this);   
-            }
+            // Implemented SingletonBehaviour Class
 
 			_audioSource = GetComponent<AudioSource>();
+			SpawnManager.OnInstantiate += PlaySpawnSound;
+			SpawnManager.OnRemove += PlayRemoveSound;
         }
+        
+        private void OnDestroy()
+		{
+			SpawnManager.OnInstantiate -= PlaySpawnSound;
+			SpawnManager.OnRemove -= PlayRemoveSound;
+		}
 
-        public void PlaySpawnSound()
+        private void PlaySpawnSound()
         {
             _audioSource.PlayOneShot(_spawnSound);
-
         }
 
-		public void PlayRemoveSound()
+		private void PlayRemoveSound()
 		{
 		    _audioSource.PlayOneShot(_removeSound);
 		}

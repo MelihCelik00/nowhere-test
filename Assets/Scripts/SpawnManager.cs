@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Assets.Scripts.Managers;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -6,9 +8,10 @@ namespace Assets.Scripts
 {
     public class SpawnManager : MonoBehaviour
     {
-        [SerializeField] private GameObject _ballPrefab;
-
         private List<Ball> _balls = new List<Ball>();
+        public static event Action OnInstantiate;
+        public static event Action OnRemove;
+        
 
         private void Update()
         {
@@ -20,16 +23,21 @@ namespace Assets.Scripts
             }
             else if (Input.GetMouseButtonDown(1))
             {
+                bool isAnyRedBall = false;
                 //TODO: This should remove all red balls, right? 
-                
                 // changed to for loop because previous one does not delete all at once, so we had to iterate
                 for (int ball = 0; ball < _balls.Count; ball++) 
                 {
-                    if (_balls[ball].Color == Color.red)
+                    if (_balls[ball].Color == Ball.Colors.Red)
                     {
+                        isAnyRedBall = true;
                         RemoveBall(_balls[ball]);
                         ball--;
                     }
+                }
+                if (isAnyRedBall)
+                {
+                    OnRemove?.Invoke();
                 }
             }
         }
@@ -38,23 +46,24 @@ namespace Assets.Scripts
         {
             //TODO: Implement a way to remove a ball from the scene and the list.
             _balls.Remove(ball);
-            Destroy(ball.gameObject);
+            PoolManager.Instance.BallPool.Release(ball);
         }
 
         private void SpawnBallAtMouseAndGiveName(Vector3 mousePosition, string name)
         {
             //TODO: Spawn a random color of ball at the position of the mouse click and play spawn sound.
-            Color randomColor = new Color(Random.value, Random.value, Random.value);
-            InstantiateBall(mousePosition, name, randomColor);
+            var ball = InstantiateBall(mousePosition);
+            ball.Color = (Ball.Colors) Random.Range(0, Enum.GetValues(typeof(Ball.Colors)).Length);
+            ball.SetName(name);
             
             //OPTIONAL: Use events for playing sounds.
+            OnInstantiate?.Invoke();
         }
 
-        private Ball InstantiateBall(Vector3 position, string name, Color color)
+        private Ball InstantiateBall(Vector3 position)
         {
-            Ball ball = Instantiate(_ballPrefab, position, Quaternion.identity).GetComponent<Ball>();    
-            ball.SetName(name);
-            ball.GetComponent<SpriteRenderer>().color = color;
+            var ball = PoolManager.Instance.BallPool.Get();
+            ball.transform.position = position;
             _balls.Add(ball);
             return ball;
         }
